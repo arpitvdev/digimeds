@@ -47,11 +47,11 @@
 </div>
 
 ---
-## 🎥 Video Demonstration
+##  Video Demonstration
 
-> [![Watch Demo](https://drive.google.com/file/d/1TC8xTlDIk7QQ-oi8M4pKi0jjA8E42-2r/view?usp=sharing)
+Watch the full video demonstration of the **DIGIMEDS** system, featuring the app workflow, real-time scanning, and AI logic parsing.
 
-*Click the button above to watch the 3-minute project walkthrough.*
+👉 **[Watch the Video Walkthrough](https://drive.google.com/file/d/1TC8xTlDIk7QQ-oi8M4pKi0jjA8E42-2r/view?usp=sharing)**
 
 
 
@@ -181,4 +181,5 @@ Follow these steps to set up the project locally.
     ```bash
     flutter run
     ```
+
 
