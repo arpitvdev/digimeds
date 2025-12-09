@@ -49,7 +49,7 @@
 ---
 ## 🎥 Video Demonstration
 
-> [![Watch Demo](https://img.shields.io/badge/Watch_Project_Demo-FF0000?style=for-the-badge&logo=google-drive&logoColor=white)](https://drive.google.com/file/d/1YeAWUWlGvAXFVcZRTarvwFpvJbCQOEoz/view?usp=sharing)
+> [![Watch Demo](https://drive.google.com/file/d/1TC8xTlDIk7QQ-oi8M4pKi0jjA8E42-2r/view?usp=sharing)
 
 *Click the button above to watch the 3-minute project walkthrough.*
 
@@ -181,3 +181,4 @@ Follow these steps to set up the project locally.
     ```bash
     flutter run
     ```
+
