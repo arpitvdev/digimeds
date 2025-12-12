@@ -6,7 +6,7 @@
   <img src="https://img.shields.io/badge/Google%20Gemini-8E75B2?style=for-the-badge&logo=googlebard&logoColor=white" alt="Gemini" />
   <br/>
 
-  # 💊 DIGIMEDS
+  # DIGIMEDS
   **AN INTELLIGENT SYSTEM FOR DIGITIZING HANDWRITTEN MEDICAL PRESCRIPTIONS**
 
   > **Group No:** 74 | **Major Project - I** | **AY 2025-26**
@@ -15,7 +15,7 @@
 
 ---
 
-## 📸 App Interface
+##  App Interface
 
 <div align="center">
   <table>
@@ -51,24 +51,24 @@
 
 Watch the full video demonstration of the **DIGIMEDS** system, featuring the app workflow, real-time scanning, and AI logic parsing.
 
-👉 **[Watch the Video Walkthrough](https://drive.google.com/file/d/1TC8xTlDIk7QQ-oi8M4pKi0jjA8E42-2r/view?usp=sharing)**
+ **[Watch the Video Walkthrough](https://drive.google.com/file/d/1TC8xTlDIk7QQ-oi8M4pKi0jjA8E42-2r/view?usp=sharing)**
 
 
 
-## ✨ Key Features
+##  Key Features
 
 | Feature | Description |
 | :--- | :--- |
-| **🧠 Smart Frequency Parsing** | Custom Regex engine translates medical shorthand (e.g., `1-0-1`, `BD`, `SOS`) into human-readable schedules (e.g., "Twice a day"). |
-| **📷 AI-Powered OCR** | Utilizes **Gemini 1.5 Flash** to extract Doctor Name, Patient Details, and Medications from handwritten images. |
-| **🔔 Auto-Reminders** | Automatically suggests and schedules local notifications based on the extracted frequency (e.g., "Thrice a Day" → 9AM, 2PM, 9PM). |
-| **☁️ Cloud Sync** | Securely stores prescription history in **Firebase Firestore**, ensuring data is backed up and accessible across devices. |
-| **🔐 Secure Auth** | Robust Email/Password authentication with persistent user sessions. |
-| **🗑️ Data Control** | Swipe-to-delete functionality ensures users have full control over their medical history. |
+| ** Smart Frequency Parsing** | Custom Regex engine translates medical shorthand (e.g., `1-0-1`, `BD`, `SOS`) into human-readable schedules (e.g., "Twice a day"). |
+| ** AI-Powered OCR** | Utilizes **Gemini 1.5 Flash** to extract Doctor Name, Patient Details, and Medications from handwritten images. |
+| ** Auto-Reminders** | Automatically suggests and schedules local notifications based on the extracted frequency (e.g., "Thrice a Day" → 9AM, 2PM, 9PM). |
+| ** Cloud Sync** | Securely stores prescription history in **Firebase Firestore**, ensuring data is backed up and accessible across devices. |
+| ** Secure Auth** | Robust Email/Password authentication with persistent user sessions. |
+| ** Data Control** | Swipe-to-delete functionality ensures users have full control over their medical history. |
 
 ---
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 - **Frontend:** Flutter (Dart) with Riverpod State Management.
 - **Backend:** FastAPI (Python) for AI orchestration.
@@ -79,11 +79,11 @@ Watch the full video demonstration of the **DIGIMEDS** system, featuring the app
 
 ---
 
-## 📂 Project Structure
+##  Project Structure
 
 ```text
 DIGIMEDS-ROOT/
-├── backend/                # 🧠 Python FastAPI Server
+├── backend/                #  Python FastAPI Server
 │   ├── venv/               # Virtual Environment
 │   ├── main.py             # API Endpoints & Logic
 │   ├── serviceAccountKey.json # Firebase Admin Keys
@@ -104,7 +104,7 @@ DIGIMEDS-ROOT/
 
 
 ```
-## 🚀 Getting Started
+##  Getting Started
 
 Follow these steps to set up the project locally.
 
@@ -181,5 +181,6 @@ Follow these steps to set up the project locally.
     ```bash
     flutter run
     ```
+
 
 
