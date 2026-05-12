@@ -3,4 +3,7 @@ uvicorn[standard]
 python-multipart
 google-generativeai
 python-dotenv
-Pillow
+transformers
+torch
+torchvision
+pillow
