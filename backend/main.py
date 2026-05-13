@@ -4,19 +4,27 @@ import json
 import time
 import re
 from typing import List, Optional
-from fastapi import FastAPI, UploadFile, File, HTTPException, Depends
+
+from fastapi import FastAPI, UploadFile, File, HTTPException
 from dotenv import load_dotenv
 from google import genai
 from pydantic import BaseModel
+
 import firebase_admin
 from firebase_admin import credentials, firestore
+
 from trocr_service import extract_text_from_prescription
 from rapidfuzz import process
 
+# ---------------- LOAD ENV ----------------
 load_dotenv()
 
 # ---------------- GEMINI ----------------
 api_key = os.getenv("GOOGLE_API_KEY")
+
+if not api_key:
+    print("ERROR: GOOGLE_API_KEY not found in .env file")
+
 client = genai.Client(api_key=api_key)
 
 # ---------------- FIREBASE ----------------
@@ -26,6 +34,7 @@ if not firebase_admin._apps:
 
 db = firestore.client()
 
+# ---------------- FASTAPI ----------------
 app = FastAPI(title="DigiMeds API 🚀")
 
 # ---------------- LOAD DRUG DATABASE ----------------
@@ -37,10 +46,13 @@ def correct_drug_name(name):
     if not name:
         return name
 
-    match, score, _ = process.extractOne(name, DRUGS)
+    match = process.extractOne(name, DRUGS)
 
-    if score > 70:
-        return match
+    if match:
+        matched_name, score, _ = match
+
+        if score > 70:
+            return matched_name
 
     return name
 
@@ -59,8 +71,10 @@ def is_valid_medicine(name):
 # ---------------- DOSAGE EXTRACTION ----------------
 def extract_dosage(text):
     match = re.search(r'\d+\s*mg', text.lower())
+
     if match:
         return match.group(0)
+
     return None
 
 # ---------------- FREQUENCY NORMALIZATION ----------------
@@ -87,49 +101,74 @@ def normalize_frequency(freq):
 
 # ---------------- GEMINI CALL ----------------
 def call_gemini(image_path, ocr_text):
-    for _ in range(3):
-        try:
-            with open(image_path, "rb") as f:
-                image_bytes = f.read()
+    try:
+        if not api_key:
+            raise Exception("GOOGLE_API_KEY missing in .env file")
 
-            response = client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=[
-                    {
-                        "role": "user",
-                        "parts": [
-                            {
-                                "text": f"""
+        # Read image
+        with open(image_path, "rb") as f:
+            image_bytes = f.read()
+
+        # Gemini request
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=[
+                {
+                    "role": "user",
+                    "parts": [
+                        {
+                            "text": f"""
 You are a medical prescription parser.
 
-Use BOTH OCR text and image.
+Analyze the prescription image and OCR text carefully.
 
 OCR TEXT:
 {ocr_text}
 
-Return ONLY valid JSON:
-patientName, doctorName, prescriptionDate,
-medications (drugName, dosage, frequency, duration)
+Return ONLY valid JSON in this exact format:
+
+{{
+  "patientName": "",
+  "doctorName": "",
+  "prescriptionDate": "",
+  "medications": [
+    {{
+      "drugName": "",
+      "dosage": "",
+      "frequency": "",
+      "duration": ""
+    }}
+  ]
+}}
+
+Do not return markdown.
+Do not return explanation.
+Return only JSON.
 """
-                            },
-                            {
-                                "inline_data": {
-                                    "mime_type": "image/jpeg",
-                                    "data": image_bytes
-                                }
+                        },
+                        {
+                            "inline_data": {
+                                "mime_type": "image/jpeg",
+                                "data": image_bytes
                             }
-                        ]
-                    }
-                ]
-            )
+                        }
+                    ]
+                }
+            ]
+        )
 
-            return response
+        print("========== GEMINI RESPONSE ==========")
+        print(response.text)
+        print("=====================================")
 
-        except Exception as e:
-            print("Retrying Gemini...", e)
-            time.sleep(2)
+        return response
 
-    raise Exception("Gemini failed")
+    except Exception as e:
+        print("========== GEMINI ERROR ==========")
+        print(str(e))
+        print("==================================")
+
+        raise Exception(f"Gemini failed: {str(e)}")
 
 # ---------------- MODELS ----------------
 class Medication(BaseModel):
@@ -155,24 +194,32 @@ async def scan_prescription(image: UploadFile = File(...)):
     try:
         file_path = f"temp_{image.filename}"
 
-        # Save image
+        # Save uploaded image
         with open(file_path, "wb") as buffer:
             buffer.write(await image.read())
 
-        # OCR
+        # OCR extraction
         extracted_text = extract_text_from_prescription(file_path)
 
-        print("OCR TEXT:", extracted_text)
+        print("========== OCR TEXT ==========")
+        print(extracted_text)
+        print("==============================")
 
-        # Gemini
+        # Gemini parsing
         response = call_gemini(file_path, extracted_text)
 
         response_text = response.text.strip()
-        response_text = response_text.replace("```json", "").replace("```", "")
 
+        # Clean markdown formatting
+        response_text = response_text.replace("```json", "")
+        response_text = response_text.replace("```", "")
+
+        # Convert JSON string to dictionary
         result = json.loads(response_text)
 
-        os.remove(file_path)
+        # Delete temp image
+        if os.path.exists(file_path):
+            os.remove(file_path)
 
         # ---------------- POST PROCESS ----------------
         cleaned_meds = []
@@ -184,15 +231,16 @@ async def scan_prescription(image: UploadFile = File(...)):
             if not is_valid_medicine(name):
                 continue
 
-            # Correct name
+            # Correct medicine name
             name = correct_drug_name(name)
 
-            # Dosage
+            # Dosage extraction
             dosage = med.get("dosage")
+
             if not dosage:
                 dosage = extract_dosage(name)
 
-            # Frequency
+            # Normalize frequency
             freq = normalize_frequency(med.get("frequency"))
 
             cleaned_meds.append({
@@ -205,6 +253,62 @@ async def scan_prescription(image: UploadFile = File(...)):
         result["medications"] = cleaned_meds
 
         return result
+
+    except Exception as e:
+        print("========== SERVER ERROR ==========")
+        print(str(e))
+        print("==================================")
+
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ---------------- ROOT ----------------
+@app.get("/")
+async def root():
+    return {"message": "DigiMeds API Running 🚀"}
+
+# ---------------- SAVE PRESCRIPTION ----------------
+@app.post("/prescriptions")
+async def save_prescription(data: dict):
+    try:
+        doc_ref = db.collection("prescriptions").document()
+
+        data["id"] = doc_ref.id
+
+        doc_ref.set(data)
+
+        return {
+            "message": "Prescription saved successfully",
+            "id": doc_ref.id
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ---------------- GET PRESCRIPTIONS ----------------
+@app.get("/prescriptions")
+async def get_prescriptions():
+    try:
+        prescriptions = []
+
+        docs = db.collection("prescriptions").stream()
+
+        for doc in docs:
+            prescriptions.append(doc.to_dict())
+
+        return prescriptions
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ---------------- DELETE PRESCRIPTION ----------------
+@app.delete("/prescriptions/{prescription_id}")
+async def delete_prescription(prescription_id: str):
+    try:
+        db.collection("prescriptions").document(prescription_id).delete()
+
+        return {
+            "message": "Prescription deleted successfully"
+        }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
